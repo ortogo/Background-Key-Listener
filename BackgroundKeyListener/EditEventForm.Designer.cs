@@ -46,11 +46,13 @@
             // 
             // tbKey
             // 
+            this.tbKey.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
+            this.tbKey.Enabled = false;
             this.tbKey.Location = new System.Drawing.Point(12, 25);
             this.tbKey.Name = "tbKey";
             this.tbKey.Size = new System.Drawing.Size(365, 20);
             this.tbKey.TabIndex = 3;
-            this.tbKey.Text = "C";
+            this.tbKey.Text = "Press any key...";
             // 
             // btnCancel
             // 

@@ -1,5 +1,6 @@
 ﻿using BackgroundKeyListener.Utils;
 using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace BackgroundKeyListener
@@ -11,14 +12,23 @@ namespace BackgroundKeyListener
         private AddEventForm addEventForm;
         private EditEventForm editEventForm;
         private ContextMenuStrip eventsMenuStrip;
+        private BindingList<string> eventsList = new BindingList<string>();
 
         public MainForm()
         {
             InitializeComponent();
-            //lboxAddedKeys.Items.Clear();
+            lboxAddedKeys.Items.Clear();
+            lboxAddedKeys.DataSource = eventsList;
             addEventForm = new AddEventForm();
             editEventForm = new EditEventForm();
             InitEventsMenuStrip();
+            eventsList.ListChanged += EventsList_ListChanged;
+            UpdateActionButtons();
+        }
+
+        private void EventsList_ListChanged(object sender, ListChangedEventArgs e)
+        {
+            UpdateActionButtons();
         }
 
         private void btnStart_Click(object sender, EventArgs e)
@@ -122,7 +132,7 @@ namespace BackgroundKeyListener
             var index = lboxAddedKeys.IndexFromPoint(e.Location);
             if (index != ListBox.NoMatches)
             {
-                var selectedMenuItem = lboxAddedKeys.Items[index].ToString();
+                var selectedMenuItem = eventsList[index].ToString();
                 eventsMenuStrip.Show(Cursor.Position);
                 eventsMenuStrip.Visible = true;
             }
@@ -147,7 +157,7 @@ namespace BackgroundKeyListener
             var result = addEventForm.ShowDialog();
             if (result == DialogResult.OK)
             {
-                lboxAddedKeys.Items.Add(addEventForm.Shortcut);
+                eventsList.Add(addEventForm.Shortcut);
             }
         }
 
@@ -168,11 +178,11 @@ namespace BackgroundKeyListener
             switch (result)
             {
                 case DialogResult.OK:
-                    lboxAddedKeys.Items.RemoveAt(selectedEventIndex);
-                    lboxAddedKeys.Items.Insert(selectedEventIndex, editEventForm.Shortcut);
+                    eventsList.RemoveAt(selectedEventIndex);
+                    eventsList.Insert(selectedEventIndex, editEventForm.Shortcut);
                     break;
                 case DialogResult.Yes:
-                    lboxAddedKeys.Items.RemoveAt(selectedEventIndex);
+                    eventsList.RemoveAt(selectedEventIndex);
                     break;
             }
         }
@@ -196,8 +206,24 @@ namespace BackgroundKeyListener
 
             if (confirmDelete == DialogResult.Yes)
             {
-                lboxAddedKeys.Items.RemoveAt(selectedEventIndex);
+                eventsList.RemoveAt(selectedEventIndex);
             }
+        }
+
+        private void UpdateActionButtons()
+        {
+            if (eventsList.Count < 1)
+            {
+                SwitchEnableActionButtons(false);
+            } else
+            {
+                SwitchEnableActionButtons(true);
+            }
+        }
+        private void SwitchEnableActionButtons(bool enable)
+        {
+            btnStart.Enabled = enable;
+            btnStop.Enabled = enable;
         }
     }
 }
