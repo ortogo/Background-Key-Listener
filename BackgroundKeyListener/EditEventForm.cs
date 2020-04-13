@@ -64,6 +64,8 @@ namespace BackgroundKeyListener
         private void EditEventForm_Shown(object sender, EventArgs e)
         {
             tbKey.Text = string.Join("+", Shortcut.Keys);
+            pressed = new List<Keys>(Shortcut.Keys.ToArray());
+            numTimeout.Value = Shortcut.Timeout;
         }
 
         private void StartListen()

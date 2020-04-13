@@ -36,6 +36,7 @@ namespace BackgroundKeyListener
 
         private void AddEventForm_Shown(object sender, EventArgs e)
         {
+            pressed = new List<Keys>();
             tbKey.Text = PRESS_ANY_KEY;
             tbKey.Focus();
             numTimeout.Value = 5;
@@ -52,7 +53,7 @@ namespace BackgroundKeyListener
             {
                 ShortcutCustom = new Shortcut
                 {
-                    Keys = pressed,
+                    Keys = new List<Keys>(pressed.ToArray()),
                     Timeout = (int)numTimeout.Value
                 };
                 DialogResult = DialogResult.OK;

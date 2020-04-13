@@ -1,4 +1,10 @@
-﻿using System;
+﻿/*
+ * 
+ * https://stackoverflow.com/a/46014022
+ * 
+ */
+
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;

@@ -1,17 +1,25 @@
-﻿using BackgroundKeyListener.Utils;
+﻿using BackgroundKeyListener.Properties;
+using BackgroundKeyListener.Utils;
 using System;
 using System.ComponentModel;
+using System.IO;
+using System.Media;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BackgroundKeyListener
 {
     public partial class MainForm : Form
     {
-        private HotkeyHandler hk;
         private AddEventForm addEventForm;
         private EditEventForm editEventForm;
         private ContextMenuStrip eventsMenuStrip;
         private BindingList<Shortcut> eventsList = new BindingList<Shortcut>();
+        private BackgroundWorker TimeoutWatcher;
+        private SoundPlayer soundPlayer;
+        private bool isSoundPlayed;
+        private int Interval = 5;
 
         public MainForm()
         {
@@ -24,6 +32,90 @@ namespace BackgroundKeyListener
             InitEventsMenuStrip();
             eventsList.ListChanged += EventsList_ListChanged;
             UpdateActionButtons();
+            InitTimeouWatcher();
+            InitSoundPlayer();
+        }
+
+        private void InitSoundPlayer()
+        {
+            var soundSource = Resources.NotifiactionSound;
+            soundPlayer = new SoundPlayer(soundSource);
+            soundPlayer.Load();
+        }
+
+        private void InitTimeouWatcher()
+        {
+            TimeoutWatcher = new BackgroundWorker();
+            TimeoutWatcher.WorkerSupportsCancellation = true;
+            TimeoutWatcher.WorkerReportsProgress = true;
+            TimeoutWatcher.DoWork += TimeoutWatcher_DoWork;
+            TimeoutWatcher.RunWorkerCompleted += TimeoutWatcher_RunWorkerCompleted;
+            TimeoutWatcher.ProgressChanged += TimeoutWatcher_ProgressChanged;
+        }
+
+        private void TimeoutWatcher_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+
+        }
+
+        private void TimeoutWatcher_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+
+        }
+
+        private void TimeoutWatcher_DoWork(object sender, DoWorkEventArgs e)
+        {
+            var worker = sender as BackgroundWorker;
+
+            while (true)
+            {
+                if (worker.CancellationPending)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+
+                foreach (var ev in eventsList)
+                {
+                    if (ev.IsExpired && ev.IsListen)
+                    {
+                        Console.WriteLine("Expired {0}, last pressed {1}.", ev.ToString(), ev.LastPressed);
+
+                        StartPlayer();
+                        ev.LastPressed = ev.LastPressed.AddSeconds(Interval);
+                    }
+                }
+                Thread.Sleep(50);
+            }
+        }
+
+        private void StartPlayer()
+        {
+            if (isSoundPlayed)
+            {
+                return;
+            }
+
+            var t = Task.Factory.StartNew(() =>
+            {
+                PlayWithEndNotify(OnPlayEnd);
+            });
+
+            isSoundPlayed = true;
+        }
+
+        private void PlayWithEndNotify(Action endNotify)
+        {
+            soundPlayer.PlaySync();
+            endNotify?.Invoke();
+        }
+
+        private void OnPlayEnd()
+        {
+            BeginInvoke((ThreadStart)delegate ()
+            {
+                isSoundPlayed = false;
+            });
         }
 
         private void EventsList_ListChanged(object sender, ListChangedEventArgs e)
@@ -38,44 +130,21 @@ namespace BackgroundKeyListener
                 shortcut.Listen();
             }
 
-            lbStatus.Text = "Started";
-        }
+            TimeoutWatcher.RunWorkerAsync();
 
-        private void Hk_Pressed(object sender, System.ComponentModel.HandledEventArgs e)
-        {
-            Console.WriteLine("Windows + G pressed!");
+            lbStatus.Text = "Started";
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
+            TimeoutWatcher.CancelAsync();
+
             foreach (var shortcut in eventsList)
             {
                 shortcut.Stop();
             }
-            return;
 
-            if (hk?.Registered ?? false)
-            {
-                hk.Unregister();
-                hk.Pressed -= Hk_Pressed; ;
-            }
             lbStatus.Text = "Stopped";
-        }
-
-        private void Hotkeys()
-        {
-            hk = new HotkeyHandler();
-            hk.KeyCode = Keys.G | Keys.A;
-            hk.Pressed += Hk_Pressed; ;
-
-            if (!hk.GetCanRegister(this))
-            {
-                Console.WriteLine("Whoops, looks like attempts to register will fail or throw an exception, show an error / visual user feedback");
-            }
-            else
-            {
-                hk.Register(this);
-            }
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -205,7 +274,8 @@ namespace BackgroundKeyListener
             if (eventsList.Count < 1)
             {
                 SwitchEnableActionButtons(false);
-            } else
+            }
+            else
             {
                 SwitchEnableActionButtons(true);
             }
