@@ -8,17 +8,17 @@ namespace BackgroundKeyListener
     public partial class MainForm : Form
     {
         private HotkeyHandler hk;
-        private LowLevelKeyboardHanler lvkh;
         private AddEventForm addEventForm;
         private EditEventForm editEventForm;
         private ContextMenuStrip eventsMenuStrip;
-        private BindingList<string> eventsList = new BindingList<string>();
+        private BindingList<Shortcut> eventsList = new BindingList<Shortcut>();
 
         public MainForm()
         {
             InitializeComponent();
             lboxAddedKeys.Items.Clear();
             lboxAddedKeys.DataSource = eventsList;
+            lboxAddedKeys.DisplayMember = "DisplayName";
             addEventForm = new AddEventForm();
             editEventForm = new EditEventForm();
             InitEventsMenuStrip();
@@ -33,22 +33,12 @@ namespace BackgroundKeyListener
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            return;
-            lvkh = new LowLevelKeyboardHanler();
-            lvkh.OnKeyPressed += Lvkh_OnKeyPressed;
-            lvkh.OnKeyUnpressed += Lvkh_OnKeyUnpressed;
-            lvkh.HookKeyboard();
+            foreach (var shortcut in eventsList)
+            {
+                shortcut.Listen();
+            }
+
             lbStatus.Text = "Started";
-        }
-
-        private void Lvkh_OnKeyUnpressed(object sender, Keys e)
-        {
-            Console.WriteLine($"Key {e.ToString()}");
-        }
-
-        private void Lvkh_OnKeyPressed(object sender, Keys e)
-        {
-            Console.WriteLine($"Key {e.ToString()}");
         }
 
         private void Hk_Pressed(object sender, System.ComponentModel.HandledEventArgs e)
@@ -58,6 +48,10 @@ namespace BackgroundKeyListener
 
         private void btnStop_Click(object sender, EventArgs e)
         {
+            foreach (var shortcut in eventsList)
+            {
+                shortcut.Stop();
+            }
             return;
 
             if (hk?.Registered ?? false)
@@ -65,8 +59,6 @@ namespace BackgroundKeyListener
                 hk.Unregister();
                 hk.Pressed -= Hk_Pressed; ;
             }
-
-            lvkh?.UnHookKeyboard();
             lbStatus.Text = "Stopped";
         }
 
@@ -157,7 +149,7 @@ namespace BackgroundKeyListener
             var result = addEventForm.ShowDialog();
             if (result == DialogResult.OK)
             {
-                eventsList.Add(addEventForm.Shortcut);
+                eventsList.Add(addEventForm.ShortcutCustom);
             }
         }
 
@@ -170,9 +162,7 @@ namespace BackgroundKeyListener
                 return;
             }
 
-            var selectedEventItem = lboxAddedKeys.SelectedItem;
-
-            editEventForm.Shortcut = selectedEventItem.ToString();
+            editEventForm.Shortcut = eventsList[selectedEventIndex];
 
             var result = editEventForm.ShowDialog();
             switch (result)

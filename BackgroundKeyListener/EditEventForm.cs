@@ -8,7 +8,7 @@ namespace BackgroundKeyListener
     public partial class EditEventForm : Form
     {
 
-        public string Shortcut = string.Empty;
+        public Shortcut Shortcut;
 
         private LowLevelKeyboardHanler keyboardHanler = new LowLevelKeyboardHanler();
         private List<Keys> pressed = new List<Keys>();
@@ -17,23 +17,34 @@ namespace BackgroundKeyListener
         public EditEventForm()
         {
             InitializeComponent();
-            FormClosing += AddEventForm_FormClosing;
-            Shown += AddEventForm_Shown;
+            FormClosing += EditEventForm_FormClosing;
+            Shown += EditEventForm_Shown;
+            tbKey.GotFocus += TbKey_GotFocus;
+            tbKey.LostFocus += TbKey_LostFocus;
         }
 
-        private void AddEventForm_Shown(object sender, EventArgs e)
+        private void TbKey_LostFocus(object sender, EventArgs e)
+        {
+            StopListen();
+        }
+
+        private void TbKey_GotFocus(object sender, EventArgs e)
         {
             StartListen();
         }
 
-        private void AddEventForm_FormClosing(object sender, FormClosingEventArgs e)
+        private void EditEventForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             StopListen();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            Shortcut = tbKey.Text;
+            Shortcut = new Shortcut
+            {
+                Keys = pressed,
+                Timeout = (int)numTimeout.Value
+            };
             DialogResult = DialogResult.OK;
             Close();
         }
@@ -52,7 +63,7 @@ namespace BackgroundKeyListener
 
         private void EditEventForm_Shown(object sender, EventArgs e)
         {
-            tbKey.Text = Shortcut;
+            tbKey.Text = string.Join("+", Shortcut.Keys);
         }
 
         private void StartListen()

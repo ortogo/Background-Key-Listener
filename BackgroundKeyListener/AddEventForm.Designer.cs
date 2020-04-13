@@ -48,10 +48,10 @@
             // 
             // tbKey
             // 
-            this.tbKey.BackColor = System.Drawing.SystemColors.InactiveCaptionText;
-            this.tbKey.Enabled = false;
+            this.tbKey.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.tbKey.Location = new System.Drawing.Point(15, 25);
             this.tbKey.Name = "tbKey";
+            this.tbKey.ReadOnly = true;
             this.tbKey.Size = new System.Drawing.Size(235, 20);
             this.tbKey.TabIndex = 2;
             this.tbKey.Text = "Press any key...";
@@ -88,6 +88,11 @@
             // numTimeout
             // 
             this.numTimeout.Location = new System.Drawing.Point(15, 64);
+            this.numTimeout.Maximum = new decimal(new int[] {
+            65536,
+            0,
+            0,
+            0});
             this.numTimeout.Name = "numTimeout";
             this.numTimeout.Size = new System.Drawing.Size(75, 20);
             this.numTimeout.TabIndex = 10;

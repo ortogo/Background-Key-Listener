@@ -9,7 +9,7 @@ namespace BackgroundKeyListener
     {
         private const string PRESS_ANY_KEY = "Press any key...";
 
-        public string Shortcut = string.Empty;
+        public Shortcut ShortcutCustom { get; set; }
 
         private LowLevelKeyboardHanler keyboardHanler = new LowLevelKeyboardHanler();
         private List<Keys> pressed = new List<Keys>();
@@ -20,12 +20,25 @@ namespace BackgroundKeyListener
             InitializeComponent();
             FormClosing += AddEventForm_FormClosing;
             Shown += AddEventForm_Shown;
+            tbKey.GotFocus += TbKey_GotFocus;
+            tbKey.LostFocus += TbKey_LostFocus;
+        }
+
+        private void TbKey_LostFocus(object sender, EventArgs e)
+        {
+            StopListen();
+        }
+
+        private void TbKey_GotFocus(object sender, EventArgs e)
+        {
+            StartListen();
         }
 
         private void AddEventForm_Shown(object sender, EventArgs e)
         {
             tbKey.Text = PRESS_ANY_KEY;
-            StartListen();
+            tbKey.Focus();
+            numTimeout.Value = 5;
         }
 
         private void AddEventForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -37,7 +50,11 @@ namespace BackgroundKeyListener
         {
             if (!tbKey.Text.Equals(PRESS_ANY_KEY))
             {
-                Shortcut = tbKey.Text;
+                ShortcutCustom = new Shortcut
+                {
+                    Keys = pressed,
+                    Timeout = (int)numTimeout.Value
+                };
                 DialogResult = DialogResult.OK;
             }
             else
